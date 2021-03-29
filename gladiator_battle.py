@@ -118,7 +118,7 @@ def build_character():
 	et = etree.ElementTree(root)
 	et.write('character_data.xml', pretty_print=True)		
 
-def validate_selection(player_selection):
+def validate_selection(player_selection, upper_limit):
 	#validation statuses are assumed to be False unless proven to be True
 	validation_status = [False, False]
 
@@ -134,7 +134,7 @@ def validate_selection(player_selection):
 	#REFACTOR FLAG
 	#this control flow should know the upper range limit based on the list it's pulling from
 	#checks if the value is within range (only if it is numeric)
-	if validation_status[0] == True and player_selection > 0  and player_selection < 2:
+	if validation_status[0] == True and player_selection > 0  and player_selection < upper_limit + 1:
 		validation_status[1] = True
 	elif player_selection >= 0 or player_selection >= 10:
 		print('Error: input was out of range')
@@ -145,6 +145,37 @@ def validate_selection(player_selection):
 	if all(validation_status) == True:
 		return True
 
+def list_selection(data_list, tag_name):
+#this function prints a list of elements that exist in an XML file
+#the function receives the name of the data file and the tag that will be searched
+#the function returns ???	
+
+	selection_list = []
+	list_number = 1
+
+	#this essentially imports the data (i.e. parses it)
+	tree = etree.parse(data_list)
+	
+	#this establishes the root node of the XML database
+	root = tree.getroot()
+
+	#begin the list printing
+	print('Choose from the following: ')
+	
+	#this loop iterates through XML database and searches for the specified tag name
+	#it stores the tags of the first-level data in a list
+	for child in root.iter(tag_name):
+		selection_list.append(child.text)
+		print(f'{list_number}. {child.text}')
+		list_number += 1
+
+	#selection validation loop
+	selection_status = False
+	while selection_status == False:	
+
+		list_selection = input('Player selection: ')
+		selection_status = validate_selection(list_selection, len(selection_list))
+
 #===========================================================================
 #game loop
 #===========================================================================
@@ -152,12 +183,16 @@ def validate_selection(player_selection):
 #===========================================================================
 #testing
 #===========================================================================
+#this tests the functionality of the list printing functiong
+#running this should print the items of an XML file as a list
+list_selection('weapon_data.xml', 'name')
+
 # #this tests the functionality of the character building function
 # #running this should write the player inputs to the character_xml data file
 # build_character()
 
-#this tests the printout of the character stats and information
-display_character_build()
+# #this tests the printout of the character stats and information
+# display_character_build()
 
 # # this tests the function of a die roller
 # # it takes an input of a string value corresponding to the number of faces of a die
