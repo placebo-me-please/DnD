@@ -1,0 +1,14 @@
+<root>
+	<greataxe>
+		<name>Greataxe</name>
+		<dmg>d12</dmg>
+		<type>s</type>
+		<hold>2</hold>
+	</greataxe>
+	<pike>
+		<name>Pike</name>
+		<dmg>d10</dmg>
+		<type>p</type>
+		<hold>2</hold>
+	</pike>
+</root>

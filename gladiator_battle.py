@@ -75,45 +75,31 @@ def build_character():
 	#start building the XML by declaring the root node
 	root = etree.Element('root')
 
-	#create a node under root that contains character data (rinse and repeat for other data)
+	#create a node under root that contains character data
 	character_branch = etree.SubElement(root, 'character')
 
-	#REFACTOR FLAG
-	#need to establish a character limit so that the player card formats correctly
-	char_name = input('Name your gladiator: ')
+	#-----CHARACTER INFO-----#
+	#name length validation loop
+	selection_status = False
+	while selection_status == False:	
+
+		char_name = input('Name your gladiator: ')
+		selection_status = validate_string_length(char_name, 25)
+
+	#establish and write to the name tag
 	name_branch = etree.SubElement(character_branch, 'name')
 	name_branch.text = char_name
-	
-	#selection status is assumed to be false unless the validation function passes the user selection
-	selection_status = False
-	while selection_status == False:
-		#this loop executes until the selection is recognized as valid
-		
-		#REFACTOR FLAG
-		#move the list of possible options to wherever they are defined so that it's easier to add new races and classes
-		print('\nChoose a race selection from the list below: \n' \
-			'1. Human') 
 
-		char_race = input('\nSelection: ')
-		selection_status = validate_selection(char_race)
-	race_branch = etree.SubElement(character_branch, 'race')
-	#NEED TO CREATE THE ELEMENT DURING REFACTORING
+	#-----INVENTORY-----#
+	#establish the inventory tag
+	#inventory includes weappons, armor, and other items
+	inventory_branch = etree.SubElement(root, 'inventory')
 
-	#selection status is assumed to be false unless the validation function passes the user selection
-	selection_status = False
-	while selection_status == False:
-		#this loop executes until the selection is recognized as valid
-		
-		#REFACTOR FLAG
-		#move the list of possible options to wherever they are defined so that it's easier to add new races and classes
-		print('\nChoose a class selection from the list below: \n' \
-			'1. Warrior') 
+	#call the list selector function to print the list of weapons in the database
+	tag_name = list_selection('weapon_data.xml', 'name')
+	etree.SubElement(inventory_branch, tag_name)
 
-		char_class = input('\nSelection: ')
-		selection_status = validate_selection(char_class)
-	class_branch = etree.SubElement(character_branch, 'class')
-	#NEED TO CREATE THE ELEMENT DURING REFACTORING
-
+	#-----SAVE DATABASE-----#
 	#once character building is complete the XML file is written
 	et = etree.ElementTree(root)
 	et.write('character_data.xml', pretty_print=True)		
@@ -131,12 +117,9 @@ def validate_selection(player_selection, upper_limit):
 		validation_status[0] = False
 		return False
 
-	#REFACTOR FLAG
-	#this control flow should know the upper range limit based on the list it's pulling from
-	#checks if the value is within range (only if it is numeric)
-	if validation_status[0] == True and player_selection > 0  and player_selection < upper_limit + 1:
+	if validation_status[0] == True and player_selection > 0  and player_selection <= upper_limit:
 		validation_status[1] = True
-	elif player_selection >= 0 or player_selection >= 10:
+	elif player_selection <= 0 or player_selection > upper_limit:
 		print('Error: input was out of range')
 		validation_status[1] = False
 		return False
@@ -145,10 +128,22 @@ def validate_selection(player_selection, upper_limit):
 	if all(validation_status) == True:
 		return True
 
+def validate_string_length(player_selection, char_limit):
+	#validation status is assumed to be False unless proven to be true
+	validation_status = False
+
+	#checks if the character length exceeds the character limit
+	if len(player_selection) > char_limit: 
+		validation_status = False
+		print(f'Error: input must be less than {char_limit} characters long')
+		return False
+	elif len(player_selection) <= char_limit:
+		return True
+
 def list_selection(data_list, tag_name):
 #this function prints a list of elements that exist in an XML file
 #the function receives the name of the data file and the tag that will be searched
-#the function returns ???	
+#the function returns the parent of the node that matches the tag_name input	
 
 	selection_list = []
 	list_number = 1
@@ -176,6 +171,10 @@ def list_selection(data_list, tag_name):
 		list_selection = input('Player selection: ')
 		selection_status = validate_selection(list_selection, len(selection_list))
 
+	#this is an lxml data type
+	tag_name = root[int(list_selection) - 1]
+	return tag_name.tag
+
 #===========================================================================
 #game loop
 #===========================================================================
@@ -183,16 +182,42 @@ def list_selection(data_list, tag_name):
 #===========================================================================
 #testing
 #===========================================================================
-#this tests the functionality of the list printing functiong
-#running this should print the items of an XML file as a list
-list_selection('weapon_data.xml', 'name')
-
-# #this tests the functionality of the character building function
-# #running this should write the player inputs to the character_xml data file
+# # this tests the functionality of the character building function
+# # running this should write the player inputs to the character_xml data file
+# # used continually to test the function of the code as development progresses 
 # build_character()
 
 # #this tests the printout of the character stats and information
+# #used as-needed to generate a reference image
 # display_character_build()
+
+# #this tests the functionality of the user-input validation function
+# #the function should behave similarly to the other selection validation function
+# #it should return True or False
+# #should be False
+# validate_string_length('qwertyuiopasdfghjklzx', 20)
+# #should be True
+# validate_string_length('qwertyuiopasdfghjklz', 20)
+
+# #this tests the functionality of the numeric input validation function
+# #the function receives a numeric input 
+# #then assesses if it's greater than zero and less than or equal to the limit
+# #should be True
+# validate_selection('1',2)
+# #should be True
+# validate_selection('2',2)
+# #should be False
+# validate_selection('3',2)
+# #should be False
+# validate_selection('0',2)
+# #this should be False
+# validate_selection('A',1)
+
+# #this tests the functionality of the list printing functiong
+# #running this should print the items of an XML file as a list
+# #the user should be prompted for an input that corresponds to the list
+# #the function returns the tag name of a node
+# list_selection('weapon_data.xml', 'name')
 
 # # this tests the function of a die roller
 # # it takes an input of a string value corresponding to the number of faces of a die
