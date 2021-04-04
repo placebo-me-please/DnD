@@ -1,0 +1,27 @@
+<root>
+	<human>
+		<name>Human</name>
+		<bonus>
+			<str>1</str>
+			<dex>1</dex>
+			<con>1</con>
+			<int>1</int>
+			<wis>1</wis>
+			<cha>1</cha>
+		</bonus>
+	</human>
+	<halforc>
+		<name>Half-Orc</name>
+		<bonus>
+			<str>2</str>
+			<con>1</con>
+		</bonus>
+	</halforc>
+	<dragonborn>
+		<name>Dragonborn</name>
+		<bonus>
+			<str>2</str>
+			<cha>1</cha>
+		</bonus>
+	</dragonborn>
+</root>

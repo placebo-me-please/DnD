@@ -90,12 +90,14 @@ def build_character():
 	name_branch = etree.SubElement(character_branch, 'name')
 	name_branch.text = char_name
 
-	#-----INVENTORY-----#
-	#establish the inventory tag
-	#inventory includes weappons, armor, and other items
-	inventory_branch = etree.SubElement(root, 'inventory')
+	#establish the race tag, call the list selector function, then write the selection
+	race_branch = etree.SubElement(character_branch, 'race')
+	tag_name = list_selection('race_data.xml', 'name')
+	etree.SubElement(race_branch, tag_name)
 
-	#call the list selector function to print the list of weapons in the database
+	#-----INVENTORY-----#
+	#establish the inventory tag, call the list selector function, then write the selection
+	inventory_branch = etree.SubElement(root, 'inventory')
 	tag_name = list_selection('weapon_data.xml', 'name')
 	etree.SubElement(inventory_branch, tag_name)
 
@@ -182,10 +184,10 @@ def list_selection(data_list, tag_name):
 #===========================================================================
 #testing
 #===========================================================================
-# # this tests the functionality of the character building function
-# # running this should write the player inputs to the character_xml data file
-# # used continually to test the function of the code as development progresses 
-# build_character()
+# this tests the functionality of the character building function
+# running this should write the player inputs to the character_xml data file
+# used continually to test the function of the code as development progresses 
+build_character()
 
 # #this tests the printout of the character stats and information
 # #used as-needed to generate a reference image
