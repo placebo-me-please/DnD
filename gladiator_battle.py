@@ -54,6 +54,43 @@ def roll_dice(faces, quantity, option):
 		elif option == 'dis':
 			return min(dual_roll)
 
+def roll_stats():
+	#initialize the stats list and loop counter variables
+	#stat_list is where the summed dice rolls will be stored
+	stat_list = []
+	loop_count = 1
+	while loop_count <= 6:
+		
+		#initialize the roll list and loop counter variables
+		#roll_list is used to store the dice rolls
+		roll_list = []
+		roll_count = 1
+		
+		#this flow follows the DnD mechanic of removing the lowest roll from the summation
+		while roll_count <= 4:
+			roll_count += 1
+			dice_roll = roll_dice('d6',1,'sum')
+			roll_list.append(dice_roll)
+		
+		#the final list of dice rolls is sorted in descending order and the lowest value is popped off
+		roll_list.sort(reverse=True)
+		roll_list.pop()
+		stat_list.append(sum(roll_list))
+		loop_count += 1
+	
+	stat_list.sort(reverse=True)
+	print(stat_list)
+
+def display_stats():
+	print(f'NO.' + '\u2502' + 'ATR' + '\u2502' + 'SCR\n' +\
+		'\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\n' \
+		' 1 ' + '\u2502' + 'STR' + '\u2502' + '   \n' \
+		' 2 ' + '\u2502' + 'DEX' + '\u2502' + '   \n' \
+		' 3 ' + '\u2502' + 'CON' + '\u2502' + '   \n' \
+		' 4 ' + '\u2502' + 'INT' + '\u2502' + '   \n' \
+		' 5 ' + '\u2502' + 'WIS' + '\u2502' + '   \n' \
+		' 6 ' + '\u2502' + 'CHA' + '\u2502' + '  ' )
+
 def display_character_build():
 	print(f'\u250f' + '\u2501' * 27 + '\u2513\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
@@ -75,31 +112,65 @@ def build_character():
 	#start building the XML by declaring the root node
 	root = etree.Element('root')
 
-	#create a node under root that contains character data
-	character_branch = etree.SubElement(root, 'character')
+	# #-----CHARACTER INFO-----#
+	# #create a node under root that contains character data
+	# character_branch = etree.SubElement(root, 'character')
 
-	#-----CHARACTER INFO-----#
-	#name length validation loop
-	selection_status = False
-	while selection_status == False:	
+	# #name length validation loop
+	# selection_status = False
+	# while selection_status == False:	
 
-		char_name = input('Name your gladiator: ')
-		selection_status = validate_string_length(char_name, 25)
+	# 	char_name = input('Name your gladiator: ')
+	# 	selection_status = validate_string_length(char_name, 25)
 
-	#establish and write to the name tag
-	name_branch = etree.SubElement(character_branch, 'name')
-	name_branch.text = char_name
+	# #establish and write to the name tag
+	# branch = etree.SubElement(character_branch, 'name')
+	# branch.text = char_name
 
-	#establish the race tag, call the list selector function, then write the selection
-	race_branch = etree.SubElement(character_branch, 'race')
-	tag_name = list_selection('race_data.xml', 'name')
-	etree.SubElement(race_branch, tag_name)
+	# #establish the race tag, call the list selector function, then write the selection
+	# branch = etree.SubElement(character_branch, 'race')
+	# tag_name = list_selection('race_data.xml', 'name')
+	# etree.SubElement(branch, tag_name)
 
-	#-----INVENTORY-----#
-	#establish the inventory tag, call the list selector function, then write the selection
-	inventory_branch = etree.SubElement(root, 'inventory')
-	tag_name = list_selection('weapon_data.xml', 'name')
-	etree.SubElement(inventory_branch, tag_name)
+	#-----STATS-----#
+	#create a node under root that contains the stats data
+	stats_branch = etree.SubElement(root, 'stats')
+
+	#establish and write to the level tag
+	#new players start at level 1
+	branch = etree.SubElement(stats_branch, 'level')
+	branch.text = '1'
+
+	#establish and write to the XP tag
+	#new players start at 0 XP
+	branch = etree.SubElement(stats_branch, 'xp')
+	branch.text = '0'
+
+	#establish the attribute tag
+	branch = etree.SubElement(stats_branch, 'attribute')
+
+	#create a list of stats for the player to view and approve
+	#the player has the option to keep or completely re-roll stats
+	selection_status = True
+	while selection_status == True:
+		stats_list = roll_stats()
+		selection_status = yesno_selection('Re-roll stats? (Y/N): ')
+
+	#assign the stats to the attribute tags
+	#enumerate the stats_list variable
+	#prompt the player to assign scores to the attributes via the display_stats ordering
+	#scores will be printed  out in descending order
+	#the player cannot select a number that they previously selected, so the validation will need to include that aspect
+	#continuously update the list so the player gets real-time feedback
+	#give the option at the end to re-do the numbering
+	#in the background a dictionary will be built using the attributes as the key values
+	#the dictionary values will be written to the character_data.xml file
+
+	# #-----INVENTORY-----#
+	# #establish the inventory tag, call the list selector function, then write the selection
+	# inventory_branch = etree.SubElement(root, 'inventory')
+	# tag_name = list_selection('weapon_data.xml', 'name')
+	# etree.SubElement(inventory_branch, tag_name)
 
 	#-----SAVE DATABASE-----#
 	#once character building is complete the XML file is written
@@ -141,6 +212,20 @@ def validate_string_length(player_selection, char_limit):
 		return False
 	elif len(player_selection) <= char_limit:
 		return True
+
+def yesno_selection(message):
+	player_ready = False
+	#this control flow waits for the players to 'ready-up'
+	while player_ready == False:
+		ready_status = input(message).upper()
+		if ready_status == 'Y':
+			return True
+		elif ready_status == 'N':
+			#cannot return False because the loop breaks
+			return False
+		else:
+			player_status = False
+			print('Error: input must be Y or N')
 
 def list_selection(data_list, tag_name):
 #this function prints a list of elements that exist in an XML file
@@ -187,11 +272,12 @@ def list_selection(data_list, tag_name):
 # this tests the functionality of the character building function
 # running this should write the player inputs to the character_xml data file
 # used continually to test the function of the code as development progresses 
-build_character()
+# build_character()
 
 # #this tests the printout of the character stats and information
 # #used as-needed to generate a reference image
 # display_character_build()
+display_stats()
 
 # #this tests the functionality of the user-input validation function
 # #the function should behave similarly to the other selection validation function
