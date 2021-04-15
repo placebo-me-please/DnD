@@ -81,15 +81,22 @@ def roll_stats():
 	stat_list.sort(reverse=True)
 	print(stat_list)
 
-def display_stats():
-	print(f'NO.' + '\u2502' + 'ATR' + '\u2502' + 'SCR\n' +\
+def display_stats(stats_dict):
+	str_atr = stats_dict['STR'] 
+	dex_atr = stats_dict['DEX'] 
+	con_atr = stats_dict['CON'] 
+	int_atr = stats_dict['INT'] 
+	wis_atr = stats_dict['WIS'] 
+	cha_atr = stats_dict['CHA'] 
+
+	print('NO.' + '\u2502' + 'ATR' + '\u2502' + 'SCR\n' +\
 		'\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\n' \
-		' 1 ' + '\u2502' + 'STR' + '\u2502' + '   \n' \
-		' 2 ' + '\u2502' + 'DEX' + '\u2502' + '   \n' \
-		' 3 ' + '\u2502' + 'CON' + '\u2502' + '   \n' \
-		' 4 ' + '\u2502' + 'INT' + '\u2502' + '   \n' \
-		' 5 ' + '\u2502' + 'WIS' + '\u2502' + '   \n' \
-		' 6 ' + '\u2502' + 'CHA' + '\u2502' + '  ' )
+		' 1 ' + '\u2502' + 'STR' + '\u2502' + f'{str_atr}  \n' \
+		' 2 ' + '\u2502' + 'DEX' + '\u2502' + f'{dex_atr}  \n' \
+		' 3 ' + '\u2502' + 'CON' + '\u2502' + f'{con_atr}  \n' \
+		' 4 ' + '\u2502' + 'INT' + '\u2502' + f'{int_atr}  \n' \
+		' 5 ' + '\u2502' + 'WIS' + '\u2502' + f'{wis_atr}  \n' \
+		' 6 ' + '\u2502' + 'CHA' + '\u2502' + f'{cha_atr}  ' )
 
 def display_character_build():
 	print(f'\u250f' + '\u2501' * 27 + '\u2513\n' \
@@ -157,7 +164,23 @@ def build_character():
 		selection_status = yesno_selection('Re-roll stats? (Y/N): ')
 
 	#assign the stats to the attribute tags
+	
+	#initialize the stats dictionary
+	#stats_order is used because the dictionary is unordered by virtue of the object type
+	#consider refactoring method this with a more efficient object
+	stats_order = ['STR','DEX','CON','INT','WIS','CHA']
+	stats_dict = {
+	'STR':'',
+	'DEX':'',
+	'CON':'',
+	'INT':'',
+	'WIS':'',
+	'CHA':''
+	}
+
 	#enumerate the stats_list variable
+	list(enumerate(stats_list))
+
 	#prompt the player to assign scores to the attributes via the display_stats ordering
 	#scores will be printed  out in descending order
 	#the player cannot select a number that they previously selected, so the validation will need to include that aspect
@@ -277,7 +300,15 @@ def list_selection(data_list, tag_name):
 # #this tests the printout of the character stats and information
 # #used as-needed to generate a reference image
 # display_character_build()
-display_stats()
+stats_dict = {
+'STR':16,
+'DEX':1,
+'CON':'',
+'INT':'',
+'WIS':'',
+'CHA':''
+}
+display_stats(stats_dict)
 
 # #this tests the functionality of the user-input validation function
 # #the function should behave similarly to the other selection validation function
