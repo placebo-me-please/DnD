@@ -79,7 +79,70 @@ def roll_stats():
 		loop_count += 1
 	
 	stat_list.sort(reverse=True)
-	print(stat_list)
+
+	#note that the value has to be returned so python doesn't assign its type as 'none'
+	return stat_list
+
+def build_stats(stat_list):
+	#initialize the stats dictionary
+	#stats_order is used because the dictionary is unordered by virtue of the object type
+	#consider refactoring method this with a more efficient object or method
+	stat_order = ['STR','DEX','CON','INT','WIS','CHA']
+	stat_dict = {
+	'STR':'',
+	'DEX':'',
+	'CON':'',
+	'INT':'',
+	'WIS':'',
+	'CHA':''
+	}
+
+	#this index variable will be used to pull reference strings from the stats_order list
+	stat_index = 0
+
+	#this control flow iterates through the stats list in descending order
+	for stat_score in stat_list:
+		
+		#communicate to the player what score is up for assignment
+
+		#this control flow validates the selection is within range and has not already been selected
+		selection_status = False
+		while selection_status == False:
+			
+			#checks if the selection is within range and numeric
+			player_selection = input(f'Assign your score of {stat_score} according to the numbered attribute list: ')
+			selection_status = validate_selection_range(player_selection, 6)
+
+			#this is a special use-case that only sees use in this stats building function
+			#the general method can be abstracted into something that works more universally if needed
+			if selection_status == True:
+				# if the selection is valid  then determine the key value that the player selected for score assignment
+				dict_key = stat_order[int(player_selection) - 1]
+				dict_val = stat_dict[dict_key]
+
+				#if the key value is empty then permit assignment by exiting the control flow
+				if dict_val == '':
+					player_selection = True
+				#if the key value is not empty but the player selection is otherwise valid then tell the player to select something different
+				elif dict_val != '':
+					selection_status = False
+					print('Select an attribute that has not already been selected')
+			
+			#if the previous selection was out of range or not numeric then keep the selection status as false and do nothing else
+			elif dict_val != '' and selection_status == False:
+				selection_status = False
+
+		#the validated selection is assigned to the dictionary
+		stat_dict[dict_key] = stat_score
+
+		#show the player the current assignments
+		print('\n')
+		display_stats(stat_dict)
+		print('\n')
+
+		#increment the stats index value
+		stat_index += 1
+	return stat_dict
 
 def display_stats(stats_dict):
 	str_atr = stats_dict['STR'] 
@@ -160,32 +223,15 @@ def build_character():
 	#the player has the option to keep or completely re-roll stats
 	selection_status = True
 	while selection_status == True:
-		stats_list = roll_stats()
+		stat_list = roll_stats()
+		print(stat_list)
 		selection_status = yesno_selection('Re-roll stats? (Y/N): ')
-
-	#assign the stats to the attribute tags
 	
-	#initialize the stats dictionary
-	#stats_order is used because the dictionary is unordered by virtue of the object type
-	#consider refactoring method this with a more efficient object
-	stats_order = ['STR','DEX','CON','INT','WIS','CHA']
-	stats_dict = {
-	'STR':'',
-	'DEX':'',
-	'CON':'',
-	'INT':'',
-	'WIS':'',
-	'CHA':''
-	}
+	selection_status = True
+	while selection_status == True:
+		stat_dict = build_stats(stat_list)
+		selection_status = yesno_selection('Re-select stats? (Y/N): ')	
 
-	#enumerate the stats_list variable
-	list(enumerate(stats_list))
-
-	#prompt the player to assign scores to the attributes via the display_stats ordering
-	#scores will be printed  out in descending order
-	#the player cannot select a number that they previously selected, so the validation will need to include that aspect
-	#continuously update the list so the player gets real-time feedback
-	#give the option at the end to re-do the numbering
 	#in the background a dictionary will be built using the attributes as the key values
 	#the dictionary values will be written to the character_data.xml file
 
@@ -200,7 +246,7 @@ def build_character():
 	et = etree.ElementTree(root)
 	et.write('character_data.xml', pretty_print=True)		
 
-def validate_selection(player_selection, upper_limit):
+def validate_selection_range(player_selection, upper_limit):
 	#validation statuses are assumed to be False unless proven to be True
 	validation_status = [False, False]
 
@@ -279,7 +325,7 @@ def list_selection(data_list, tag_name):
 	while selection_status == False:	
 
 		list_selection = input('Player selection: ')
-		selection_status = validate_selection(list_selection, len(selection_list))
+		selection_status = validate_selection_range(list_selection, len(selection_list))
 
 	#this is an lxml data type
 	tag_name = root[int(list_selection) - 1]
@@ -295,20 +341,20 @@ def list_selection(data_list, tag_name):
 # this tests the functionality of the character building function
 # running this should write the player inputs to the character_xml data file
 # used continually to test the function of the code as development progresses 
-# build_character()
+build_character()
 
 # #this tests the printout of the character stats and information
 # #used as-needed to generate a reference image
 # display_character_build()
-stats_dict = {
-'STR':16,
-'DEX':1,
-'CON':'',
-'INT':'',
-'WIS':'',
-'CHA':''
-}
-display_stats(stats_dict)
+# stats_dict = {
+# 'STR':16,
+# 'DEX':1,
+# 'CON':'',
+# 'INT':'',
+# 'WIS':'',
+# 'CHA':''
+# }
+# display_stats(stats_dict)
 
 # #this tests the functionality of the user-input validation function
 # #the function should behave similarly to the other selection validation function
@@ -322,15 +368,15 @@ display_stats(stats_dict)
 # #the function receives a numeric input 
 # #then assesses if it's greater than zero and less than or equal to the limit
 # #should be True
-# validate_selection('1',2)
+# validate_selection_rage('1',2)
 # #should be True
-# validate_selection('2',2)
+# validate_selection_range('2',2)
 # #should be False
-# validate_selection('3',2)
+# validate_selection_range('3',2)
 # #should be False
-# validate_selection('0',2)
+# validate_selection_range('0',2)
 # #this should be False
-# validate_selection('A',1)
+# validate_selection_range('A',1)
 
 # #this tests the functionality of the list printing functiong
 # #running this should print the items of an XML file as a list
