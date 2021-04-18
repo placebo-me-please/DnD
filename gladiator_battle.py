@@ -2,7 +2,8 @@
 from random import randint	
 
 #LXML library for parsing and writing XML data
-from lxml import etree	
+from lxml import etree
+import xml.etree.ElementTree as ET	
 
 #clear the command line
 import os
@@ -180,11 +181,12 @@ def display_character_build():
 
 def build_character():
 	#start building the XML by declaring the root node
+	#this variable will always be associated with the character_data.xml in this function
 	root = etree.Element('root')
 
-	# #-----CHARACTER INFO-----#
-	# #create a node under root that contains character data
-	# character_branch = etree.SubElement(root, 'character')
+	#-----CHARACTER INFO-----#
+	#create a node under root that contains character data
+	character_branch = etree.SubElement(root, 'character')
 
 	# #name length validation loop
 	# selection_status = False
@@ -197,43 +199,85 @@ def build_character():
 	# branch = etree.SubElement(character_branch, 'name')
 	# branch.text = char_name
 
-	# #establish the race tag, call the list selector function, then write the selection
-	# branch = etree.SubElement(character_branch, 'race')
-	# tag_name = list_selection('race_data.xml', 'name')
-	# etree.SubElement(branch, tag_name)
+	#establish the race tag, call the list selector function, then write the selection
+	branch = etree.SubElement(character_branch, 'race')
+	tag_name = list_selection('race_data.xml', 'name')
+	etree.SubElement(branch, tag_name)
 
 	#-----STATS-----#
 	#create a node under root that contains the stats data
 	stats_branch = etree.SubElement(root, 'stats')
 
-	#establish and write to the level tag
-	#new players start at level 1
-	branch = etree.SubElement(stats_branch, 'level')
-	branch.text = '1'
+	# #establish and write to the level tag
+	# #new players start at level 1
+	# branch = etree.SubElement(stats_branch, 'level')
+	# branch.text = '1'
 
-	#establish and write to the XP tag
-	#new players start at 0 XP
-	branch = etree.SubElement(stats_branch, 'xp')
-	branch.text = '0'
+	# #establish and write to the XP tag
+	# #new players start at 0 XP
+	# branch = etree.SubElement(stats_branch, 'xp')
+	# branch.text = '0'
 
-	#establish the attribute tag
-	branch = etree.SubElement(stats_branch, 'attribute')
+	# #establish the attribute tag
+	# branch = etree.SubElement(stats_branch, 'attribute')
 
-	#create a list of stats for the player to view and approve
-	#the player has the option to keep or completely re-roll stats
-	selection_status = True
-	while selection_status == True:
-		stat_list = roll_stats()
-		print(stat_list)
-		selection_status = yesno_selection('Re-roll stats? (Y/N): ')
+	# #create a list of stats for the player to view and approve
+	# #the player has the option to keep or completely re-roll stats
+	# selection_status = True
+	# while selection_status == True:
+	# 	stat_list = roll_stats()
+	# 	print(stat_list)
+	# 	selection_status = yesno_selection('Re-roll stats? (Y/N): ')
 	
-	selection_status = True
-	while selection_status == True:
-		stat_dict = build_stats(stat_list)
-		selection_status = yesno_selection('Re-select stats? (Y/N): ')	
+	# #build the stats dictionary and allow the user to re-build them at the end
+	# selection_status = True
+	# while selection_status == True:
+	# 	stat_dict = build_stats(stat_list)
+	# 	selection_status = yesno_selection('Re-select stats? (Y/N): ')	
 
-	#in the background a dictionary will be built using the attributes as the key values
-	#the dictionary values will be written to the character_data.xml file
+	#incorporate the race-based attribute increases with the raw score
+	#the user will not be shown this step because they are expected to know the bonuses of each race
+	#use this dictionary for spoofing stats for testing
+	stat_dict = {
+	'STR':10,'DEX':10,'CON':10,'INT':10,'WIS':10,'CHA':10}
+
+	#combine the race_data.xml and the recently-built stats_dict
+	#the code also needs to recall the race that the player chose
+	branch = root.find('character')
+	branch = branch.find('race')
+	
+	#print the player-selected race 
+	#this method is appropriate because there will only ever be one tag in this branch
+	player_race = branch[0].tag
+
+	#now the race_data.xml needs to be parsed
+	race_data = ET.parse('race_data.xml')
+	race_root = race_data.getroot()
+
+	#find the corresponding race tag in the parsed XML and find the bonus tag
+	branch = race_root.find(player_race)
+	branch = branch.find('bonus')
+
+	#this is the final step for determining the character stats
+	#now the code iterates through the stat_dict and searches the bonus branch for matching attributes
+	#if a match is found then the bonus is added to the corresponding dictionary value
+	for attr_key in stat_dict.keys():
+		
+		#search the race_data XML for the current attribute key
+		#lower method is used because all tags are written in undercase letters
+		attr_tag = branch.find(attr_key.lower())
+
+		#if no match is found etree returns None
+		#the code uses this as the test condition for adding bonuses
+		if attr_tag is None:
+			pass
+		#if a match is found then the bonus is added to the dictionary value
+		#the XML text needs to be converted to integer type to be correctly summed
+		else:
+			stat_dict[attr_key] = stat_dict[attr_key] + int(attr_tag.text)
+
+	#finally the stats will be written to the character_data.xml file
+	#to be written...
 
 	# #-----INVENTORY-----#
 	# #establish the inventory tag, call the list selector function, then write the selection
@@ -259,6 +303,7 @@ def validate_selection_range(player_selection, upper_limit):
 		validation_status[0] = False
 		return False
 
+	#checks if the selection is within range
 	if validation_status[0] == True and player_selection > 0  and player_selection <= upper_limit:
 		validation_status[1] = True
 	elif player_selection <= 0 or player_selection > upper_limit:
