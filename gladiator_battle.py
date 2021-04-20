@@ -162,9 +162,19 @@ def display_stats(stats_dict):
 		' 5 ' + '\u2502' + 'WIS' + '\u2502' + f'{wis_atr}  \n' \
 		' 6 ' + '\u2502' + 'CHA' + '\u2502' + f'{cha_atr}  ' )
 
-def display_character_build():
+def display_character_build(character_data):
+	#parse the character data file and establish its root variable
+	tree = etree.parse(character_data)
+	root = tree.getroot()
+
+	#assign the character data to variables
+	branch = root.find('character')
+	branch = branch.find('name')
+	char_name = pad_string(branch.text, 27)
+
+	#print the variables and the character sheet
 	print(f'\u250f' + '\u2501' * 27 + '\u2513\n' \
-		'\u2503' + ' ' * 27 + '\u2503\n' \
+		'\u2503' + char_name + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
@@ -376,6 +386,21 @@ def list_selection(data_list, tag_name):
 	tag_name = root[int(list_selection) - 1]
 	return tag_name.tag
 
+def pad_string(input_string, field_length):
+	
+	#determine the length of the string
+	string_length = len(input_string)
+
+	#determine if the string needs padding
+	#if the input string is less than the field length then it needs to be padded
+	if string_length < field_length:
+		padding_delta = field_length - string_length
+		input_string = input_string + padding_delta * ' '
+		return input_string
+	#otherwise the control flow is skipped	
+	elif string_length == field_length:
+		return input_string
+
 #===========================================================================
 #game loop
 #===========================================================================
@@ -383,6 +408,21 @@ def list_selection(data_list, tag_name):
 #===========================================================================
 #testing
 #===========================================================================
+# #this tests the functionality of the padding function
+# #running this should pad an input string with empty space 
+# #this is primarily to be used for maintiaining the appearance of the character sheet
+# #the integer input is the total space that must be occupied
+# #note that one space is expected
+# test = pad_string('ABC', 10)
+# print(test, 'end') 
+# test = pad_string('XYZ', 3)
+# print(test, 'end')
+
+# #this tests the functionalirt of the character sheet display function
+# #running this should produce a fully-populated character sheet for the plater to review
+# #the only input should be the character data file
+# display_character_build('rosebud_data.xml')
+
 # this tests the functionality of the character building function
 # running this should write the player inputs to the character_xml data file
 # used continually to test the function of the code as development progresses 
