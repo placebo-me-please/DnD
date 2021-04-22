@@ -117,7 +117,7 @@ def build_stats(stat_list):
 			#this is a special use-case that only sees use in this stats building function
 			#the general method can be abstracted into something that works more universally if needed
 			if selection_status == True:
-				# if the selection is valid  then determine the key value that the player selected for score assignment
+				# if the selection is valid then determine the key value that the player selected for score assignment
 				dict_key = stat_order[int(player_selection) - 1]
 				dict_val = stat_dict[dict_key]
 
@@ -167,25 +167,33 @@ def display_character_build(character_data):
 	tree = etree.parse(character_data)
 	root = tree.getroot()
 
-	#assign the character data to variables
+	#assign the character data to a variable
 	branch = root.find('character')
 	branch = branch.find('name')
-	char_name = pad_string(branch.text, 27)
+	char_name = pad_string(branch.text.capitalize(), 27)
+
+	#assign the character race and class data to a variable
+	#consider refactoring the XML data structure, which would take one full session to do
+	#changes would cascade to other areas of the code including validation
+	#also need to consider the possibility of adding new classes which would trigger simple refactoring
+	branch = root.find('character')
+	branch = branch.find('race')
+	char_race = pad_string(branch[0].tag.capitalize() + ' Warrior', 27)
 
 	#print the variables and the character sheet
 	print(f'\u250f' + '\u2501' * 27 + '\u2513\n' \
 		'\u2503' + char_name + '\u2503\n' \
-		'\u2503' + ' ' * 27 + '\u2503\n' \
+		'\u2503' + char_race + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + 'ATR' + '\u2502' + 'RAW' + '\u2502' + 'MOD' + ' ' * 2 + 'HP' + '\u2502' + 'AC' + '\u2502' + 'SP' + ' ' * 6 + '\u2503\n' \
 		'\u2503' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3  + ' ' * 2 + '\u2500' * 2 + '\u253c' + '\u2500' * 2 + '\u253c' + '\u2500' * 2  + ' ' * 6 + '\u2503\n' \
-		'\u2503' + ' ' * 3 + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 7 + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
-		'\u2503' + ' ' * 3 + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
-		'\u2503' + ' ' * 3 + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 5 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
-		'\u2503' + ' ' * 3 + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
-		'\u2503' + ' ' * 3 + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
-		'\u2503' + ' ' * 3 + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
+		'\u2503' + 'STR' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 7 + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
+		'\u2503' + 'DEX' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
+		'\u2503' + 'CON' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 5 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
+		'\u2503' + 'INT' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
+		'\u2503' + 'WIS' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
+		'\u2503' + 'CHA' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2517' + '\u2501' * 27 + '\u251b')
 
@@ -218,6 +226,9 @@ def build_character():
 	#create a node under root that contains the stats data
 	stats_branch = etree.SubElement(root, 'stats')
 
+	#establish the attribute tag
+	attribute_branch = etree.SubElement(root, 'attribute')
+
 	#establish and write to the level tag
 	#new players start at level 1
 	branch = etree.SubElement(stats_branch, 'level')
@@ -227,9 +238,6 @@ def build_character():
 	#new players start at 0 XP
 	branch = etree.SubElement(stats_branch, 'xp')
 	branch.text = '0'
-
-	#establish the attribute tag
-	branch = etree.SubElement(stats_branch, 'attribute')
 
 	#create a list of stats for the player to view and approve
 	#the player has the option to keep or completely re-roll stats
@@ -245,11 +253,9 @@ def build_character():
 		stat_dict = build_stats(stat_list)
 		selection_status = yesno_selection('Re-select stats? (Y/N): ')	
 
-	#incorporate the race-based attribute increases with the raw score
-	#the user will not be shown this step because they are expected to know the bonuses of each race
-	#use this dictionary for spoofing stats for testing
-	stat_dict = {
-	'STR':10,'DEX':10,'CON':10,'INT':10,'WIS':10,'CHA':10}
+	# #use this dictionary for spoofing stats for testing
+	# stat_dict = {
+	# 'STR':10,'DEX':10,'CON':10,'INT':10,'WIS':10,'CHA':10}
 
 	#combine the race_data.xml and the recently-built stats_dict
 	#the code also needs to recall the race that the player chose
@@ -284,7 +290,7 @@ def build_character():
 			stat_dict[attr_key] = stat_dict[attr_key] + int(attr_tag.text)
 
 		#finally the stats are written to the character_data.xml file
-		attr_branch = etree.SubElement(stats_branch, attr_key.lower())
+		attr_branch = etree.SubElement(attribute_branch, attr_key.lower())
 
 		#the stat is stored as a string because that is the oly accepted input for XML
 		attr_branch.text = str(stat_dict[attr_key])
