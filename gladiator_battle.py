@@ -84,6 +84,36 @@ def roll_stats():
 	#note that the value has to be returned so python doesn't assign its type as 'none'
 	return stat_list
 
+def modify_attr(attr_score):
+	#this function takes the raw attribute score as an input and returns the modified score
+	#it can accept strings and integers, but it will always return that form to the user
+	#consider refactoring this function as a method after learning more about it in class
+	flag_str = False
+	flag_int = False
+
+	#checks if the input was a string or integer and flags accordingly
+	if type(attr_score) == str:
+		flag_str = True
+	elif type(attr_score) == int:
+		flag_int = True
+
+	#performs the math (note that converting to int automatically rounds 0.5 down)
+	attr_score = int(attr_score)
+	mod_score = (attr_score - 10)/2
+
+	#this checks if the modifier divides evenly
+	#the purpose of this is effectively to round numbers down since int()  doesn't always return the expected value
+	if mod_score % 1 != 0:
+		mod_score -= 0.5 
+
+	#this needs to be performed or else the str() function returns the leading zero
+	mod_score = int(mod_score)
+
+	if flag_str == True:
+		return str(mod_score)
+	elif flag_int == True:
+		return int(mod_score)
+
 def build_stats(stat_list):
 	#initialize the stats dictionary
 	#stats_order is used because the dictionary is unordered by virtue of the object type
@@ -170,15 +200,26 @@ def display_character_build(character_data):
 	#assign the character data to a variable
 	branch = root.find('character')
 	branch = branch.find('name')
-	char_name = pad_string(branch.text.capitalize(), 27)
+	char_name = pad_string(branch.text.capitalize(), 27, True)
 
 	#assign the character race and class data to a variable
 	#consider refactoring the XML data structure, which would take one full session to do
 	#changes would cascade to other areas of the code including validation
-	#also need to consider the possibility of adding new classes which would trigger simple refactoring
+	#also need to consider the possibility of adding new classes, which would trigger simple refactoring
 	branch = root.find('character')
 	branch = branch.find('race')
-	char_race = pad_string(branch[0].tag.capitalize() + ' Warrior', 27)
+	char_race = pad_string(branch[0].tag.capitalize() + ' Warrior', 27, True)
+
+	#assign the attributes to an ordered list
+	stat_list =[]
+	mod_list = []
+	branch = root.find('attribute')
+	for attr_score in branch:
+		attr_score = pad_string(attr_score.text, 3, False)
+		mod_score = modify_attr(attr_score)
+		mod_score = pad_string(mod_score, 3, False)
+		stat_list.append(attr_score)
+		mod_list.append(mod_score)
 
 	#print the variables and the character sheet
 	print(f'\u250f' + '\u2501' * 27 + '\u2513\n' \
@@ -188,12 +229,12 @@ def display_character_build(character_data):
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + 'ATR' + '\u2502' + 'RAW' + '\u2502' + 'MOD' + ' ' * 2 + 'HP' + '\u2502' + 'AC' + '\u2502' + 'SP' + ' ' * 6 + '\u2503\n' \
 		'\u2503' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3  + ' ' * 2 + '\u2500' * 2 + '\u253c' + '\u2500' * 2 + '\u253c' + '\u2500' * 2  + ' ' * 6 + '\u2503\n' \
-		'\u2503' + 'STR' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 7 + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
-		'\u2503' + 'DEX' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
-		'\u2503' + 'CON' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 5 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
-		'\u2503' + 'INT' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
-		'\u2503' + 'WIS' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
-		'\u2503' + 'CHA' + '\u2502' + ' ' * 3 + '\u2502' + ' ' * 19 + '\u2503\n' \
+		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 4 + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
+		'\u2503' + 'DEX' + '\u2502' + stat_list[1] + '\u2502' + mod_list[1] + ' ' * 16 + '\u2503\n' \
+		'\u2503' + 'CON' + '\u2502' + stat_list[2] + '\u2502' + mod_list[2] + ' ' * 2 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
+		'\u2503' + 'INT' + '\u2502' + stat_list[3] + '\u2502' + mod_list[3] + ' ' * 16 + '\u2503\n' \
+		'\u2503' + 'WIS' + '\u2502' + stat_list[4] + '\u2502' + mod_list[4] + ' ' * 16 + '\u2503\n' \
+		'\u2503' + 'CHA' + '\u2502' + stat_list[5] + '\u2502' + mod_list[5] + ' ' * 16 + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2517' + '\u2501' * 27 + '\u251b')
 
@@ -392,7 +433,7 @@ def list_selection(data_list, tag_name):
 	tag_name = root[int(list_selection) - 1]
 	return tag_name.tag
 
-def pad_string(input_string, field_length):
+def pad_string(input_string, field_length, adjustment):
 	
 	#determine the length of the string
 	string_length = len(input_string)
@@ -401,8 +442,17 @@ def pad_string(input_string, field_length):
 	#if the input string is less than the field length then it needs to be padded
 	if string_length < field_length:
 		padding_delta = field_length - string_length
-		input_string = input_string + padding_delta * ' '
+
+		#if the string is left-adjusted then the spaces are added on after
+		if adjustment == True:
+			input_string = input_string + padding_delta * ' '
+
+		#if the string is right-adjsuted then the spaces are added on before
+		elif adjustment == False:
+			input_string = padding_delta * ' ' + input_string
+
 		return input_string
+	
 	#otherwise the control flow is skipped	
 	elif string_length == field_length:
 		return input_string
@@ -414,25 +464,41 @@ def pad_string(input_string, field_length):
 #===========================================================================
 #testing
 #===========================================================================
+# #this tests the functionality of the score modifying function
+# #the input is a single string or integer 
+# #a score of 10 the function should return '0' (i.e. string)
+# print(modify_attr('10'))
+# #a score of 11 should also return '0'
+# print(modify_attr('11'))
+# #a score of 12 should return '1'
+# print(modify_attr('12'))
+# #a score of 9 should return '-1'
+# print(modify_attr('9'))
+# #a score of 8 should also return '-1'
+# print(modify_attr('8'))
+# #finally the data types need to be validated
+# print(type(modify_attr('8')))
+# print(type(modify_attr(8)))
+
 # #this tests the functionality of the padding function
 # #running this should pad an input string with empty space 
 # #this is primarily to be used for maintiaining the appearance of the character sheet
 # #the integer input is the total space that must be occupied
 # #note that one space is expected
-# test = pad_string('ABC', 10)
+# test = pad_string('ABC', 10, True)
 # print(test, 'end') 
-# test = pad_string('XYZ', 3)
+# test = pad_string('XYZ', 3, True)
 # print(test, 'end')
 
-# #this tests the functionalirt of the character sheet display function
-# #running this should produce a fully-populated character sheet for the plater to review
-# #the only input should be the character data file
-# display_character_build('rosebud_data.xml')
+#this tests the functionalirt of the character sheet display function
+#running this should produce a fully-populated character sheet for the plater to review
+#the only input should be the character data file
+display_character_build('rosebud_data.xml')
 
-# this tests the functionality of the character building function
-# running this should write the player inputs to the character_xml data file
-# used continually to test the function of the code as development progresses 
-build_character()
+# # this tests the functionality of the character building function
+# # running this should write the player inputs to the character_xml data file
+# # used continually to test the function of the code as development progresses 
+# build_character()
 
 # #this tests the printout of the character stats and information
 # #used as-needed to generate a reference image
