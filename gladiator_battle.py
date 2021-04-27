@@ -199,8 +199,10 @@ def display_character_build(character_data):
 
 	#assign the character data to a variable
 	branch = root.find('character')
-	branch = branch.find('name')
-	char_name = pad_string(branch.text.capitalize(), 27, True)
+	name_branch = branch.find('name')
+	branch = root.find('stats')
+	lvl_branch = branch.find('level')
+	char_name = pad_string(name_branch.text.capitalize() + ', LVL ' + lvl_branch.text.capitalize(), 27, True)
 
 	#assign the character race and class data to a variable
 	#consider refactoring the XML data structure, which would take one full session to do
@@ -209,6 +211,11 @@ def display_character_build(character_data):
 	branch = root.find('character')
 	branch = branch.find('race')
 	char_race = pad_string(branch[0].tag.capitalize() + ' Warrior', 27, True)
+
+	#assign the HP data to a variable
+	branch = root.find('stats')
+	branch = branch.find('hp')
+	char_hp = pad_string(branch.text, 2, False)
 
 	#assign the attributes to an ordered list
 	stat_list =[]
@@ -229,7 +236,7 @@ def display_character_build(character_data):
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + 'ATR' + '\u2502' + 'RAW' + '\u2502' + 'MOD' + ' ' * 2 + 'HP' + '\u2502' + 'AC' + '\u2502' + 'SP' + ' ' * 6 + '\u2503\n' \
 		'\u2503' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3  + ' ' * 2 + '\u2500' * 2 + '\u253c' + '\u2500' * 2 + '\u253c' + '\u2500' * 2  + ' ' * 6 + '\u2503\n' \
-		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 4 + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
+		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 2 + char_hp + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
 		'\u2503' + 'DEX' + '\u2502' + stat_list[1] + '\u2502' + mod_list[1] + ' ' * 16 + '\u2503\n' \
 		'\u2503' + 'CON' + '\u2502' + stat_list[2] + '\u2502' + mod_list[2] + ' ' * 2 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
 		'\u2503' + 'INT' + '\u2502' + stat_list[3] + '\u2502' + mod_list[3] + ' ' * 16 + '\u2503\n' \
@@ -266,6 +273,10 @@ def build_character():
 	#-----STATS-----#
 	#create a node under root that contains the stats data
 	stats_branch = etree.SubElement(root, 'stats')
+
+	#establish and write to the movement speed tag
+	branch = etree.SubElement(stats_branch, 'speed')
+	#access the race_data.xml, compare against the player selection, and locate the speed value
 
 	#establish the attribute tag
 	attribute_branch = etree.SubElement(root, 'attribute')
@@ -335,6 +346,13 @@ def build_character():
 
 		#the stat is stored as a string because that is the oly accepted input for XML
 		attr_branch.text = str(stat_dict[attr_key])
+
+	#establish and write to the HP tag
+	branch = etree.SubElement(stats_branch, 'hp')
+	#roll the dice and add the consitution modifier to the result
+	hp_raw = roll_dice('d12', 1, 'sum')
+	hp_mod = modify_attr(int(stat_dict['CON']))
+	branch.text = str(hp_raw + hp_mod)
 
 	#-----INVENTORY-----#
 	#establish the inventory tag, call the list selector function, then write the selection
