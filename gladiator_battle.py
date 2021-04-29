@@ -217,6 +217,11 @@ def display_character_build(character_data):
 	branch = branch.find('hp')
 	char_hp = pad_string(branch.text, 2, False)
 
+	#assign the speed data to a variable
+	branch = root.find('stats')
+	branch = branch.find('speed')
+	char_sp = pad_string(branch.text, 2, False)
+
 	#assign the attributes to an ordered list
 	stat_list =[]
 	mod_list = []
@@ -236,7 +241,7 @@ def display_character_build(character_data):
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + 'ATR' + '\u2502' + 'RAW' + '\u2502' + 'MOD' + ' ' * 2 + 'HP' + '\u2502' + 'AC' + '\u2502' + 'SP' + ' ' * 6 + '\u2503\n' \
 		'\u2503' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3  + ' ' * 2 + '\u2500' * 2 + '\u253c' + '\u2500' * 2 + '\u253c' + '\u2500' * 2  + ' ' * 6 + '\u2503\n' \
-		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 2 + char_hp + '\u2502' + ' ' * 2 + '\u2502' + ' ' * 8 + '\u2503\n' \
+		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 2 + char_hp + '\u2502' + ' ' * 2 + '\u2502' + char_sp + ' ' * 6 + '\u2503\n' \
 		'\u2503' + 'DEX' + '\u2502' + stat_list[1] + '\u2502' + mod_list[1] + ' ' * 16 + '\u2503\n' \
 		'\u2503' + 'CON' + '\u2502' + stat_list[2] + '\u2502' + mod_list[2] + ' ' * 2 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
 		'\u2503' + 'INT' + '\u2502' + stat_list[3] + '\u2502' + mod_list[3] + ' ' * 16 + '\u2503\n' \
@@ -267,16 +272,12 @@ def build_character():
 
 	#establish the race tag, call the list selector function, then write the selection
 	branch = etree.SubElement(character_branch, 'race')
-	tag_name = list_selection('race_data.xml', 'name')
-	etree.SubElement(branch, tag_name)
+	race_tag = list_selection('race_data.xml', 'name')
+	etree.SubElement(branch, race_tag)
 
 	#-----STATS-----#
 	#create a node under root that contains the stats data
 	stats_branch = etree.SubElement(root, 'stats')
-
-	#establish and write to the movement speed tag
-	branch = etree.SubElement(stats_branch, 'speed')
-	#access the race_data.xml, compare against the player selection, and locate the speed value
 
 	#establish the attribute tag
 	attribute_branch = etree.SubElement(root, 'attribute')
@@ -354,6 +355,11 @@ def build_character():
 	hp_mod = modify_attr(int(stat_dict['CON']))
 	branch.text = str(hp_raw + hp_mod)
 
+	#establish the speed tag, recall the selected race, then write the movement speed
+	branch = etree.SubElement(stats_branch, 'speed')
+	speed = pull_value('race_data.xml', race_tag, 'speed')
+	branch.text = speed
+
 	#-----INVENTORY-----#
 	#establish the inventory tag, call the list selector function, then write the selection
 	inventory_branch = etree.SubElement(root, 'inventory')
@@ -416,6 +422,20 @@ def yesno_selection(message):
 			player_status = False
 			print('Error: input must be Y or N')
 
+def pull_value(data_list, parent_tag, child_tag):
+#consider refactoring this function to accept an arbitrary number of inputs after the 'data_list' variable
+	
+	#this imports the data (i.e. parses it)
+	tree = etree.parse(data_list)
+
+	#this establishes the root node of the XML database
+	root = tree.getroot()
+
+	#this finds the parent tag and the subsequent child tag
+	parent_tag = root.find(parent_tag)
+	child_tag = parent_tag.findall(child_tag)
+	return child_tag[0].text
+
 def list_selection(data_list, tag_name):
 #this function prints a list of elements that exist in an XML file
 #the function receives the name of the data file and the tag that will be searched
@@ -424,7 +444,7 @@ def list_selection(data_list, tag_name):
 	selection_list = []
 	list_number = 1
 
-	#this essentially imports the data (i.e. parses it)
+	#this imports the data (i.e. parses it)
 	tree = etree.parse(data_list)
 	
 	#this establishes the root node of the XML database
@@ -447,6 +467,7 @@ def list_selection(data_list, tag_name):
 		list_selection = input('Player selection: ')
 		selection_status = validate_selection_range(list_selection, len(selection_list))
 
+	#returns the race tag text 
 	#this is an lxml data type
 	tag_name = root[int(list_selection) - 1]
 	return tag_name.tag
@@ -482,6 +503,13 @@ def pad_string(input_string, field_length, adjustment):
 #===========================================================================
 #testing
 #===========================================================================
+# #this tests the functionality of the pull_value function
+# #the inputs are the name of the data file, and the parent and child tag names
+# #this should return a value of 25
+# pull_value('race_data.xml', 'dwarf', 'speed')
+# #this should return 'Half-Orc'
+# pull_value('race_data.xml', 'halforc', 'name')
+
 # #this tests the functionality of the score modifying function
 # #the input is a single string or integer 
 # #a score of 10 the function should return '0' (i.e. string)
