@@ -140,8 +140,13 @@ def build_stats(stat_list):
 		selection_status = False
 		while selection_status == False:
 			
+			#show the player their current selections
+			print('\n')
+			display_stats(stat_dict)
+			print('\n')
+
 			#checks if the selection is within range and numeric
-			player_selection = input(f'Assign your score of {stat_score} according to the numbered attribute list: ')
+			player_selection = input(f'Assign your score of {stat_score} according to the numbered attribute list above: ')
 			selection_status = validate_selection_range(player_selection, 6)
 
 			#this is a special use-case that only sees use in this stats building function
@@ -165,11 +170,6 @@ def build_stats(stat_list):
 
 		#the validated selection is assigned to the dictionary
 		stat_dict[dict_key] = stat_score
-
-		#show the player the current assignments
-		print('\n')
-		display_stats(stat_dict)
-		print('\n')
 
 		#increment the stats index value
 		stat_index += 1
@@ -210,7 +210,7 @@ def display_character_build(character_data):
 	#also need to consider the possibility of adding new classes, which would trigger simple refactoring
 	branch = root.find('character')
 	branch = branch.find('race')
-	char_race = pad_string(branch[0].tag.capitalize() + ' Warrior', 27, True)
+	char_race = pad_string(branch[0].tag.capitalize() + ' Barbarian', 27, True)
 
 	#assign the HP data to a variable
 	branch = root.find('stats')
@@ -221,6 +221,15 @@ def display_character_build(character_data):
 	branch = root.find('stats')
 	branch = branch.find('speed')
 	char_sp = pad_string(branch.text, 2, False)
+
+	#assign the AC data to a variable
+	branch = root.find('stats')
+	branch = branch.find('ac')
+	char_ac = pad_string(branch.text, 2, False)
+
+	#assign the weapon data to a variable
+	branch = root.find('inventory')
+	char_weapon = pad_string(branch[0].tag.capitalize(), 14, True)
 
 	#assign the attributes to an ordered list
 	stat_list =[]
@@ -241,10 +250,10 @@ def display_character_build(character_data):
 		'\u2503' + ' ' * 27 + '\u2503\n' \
 		'\u2503' + 'ATR' + '\u2502' + 'RAW' + '\u2502' + 'MOD' + ' ' * 2 + 'HP' + '\u2502' + 'AC' + '\u2502' + 'SP' + ' ' * 6 + '\u2503\n' \
 		'\u2503' + '\u2500' * 3 + '\u253c' + '\u2500' * 3 + '\u253c' + '\u2500' * 3  + ' ' * 2 + '\u2500' * 2 + '\u253c' + '\u2500' * 2 + '\u253c' + '\u2500' * 2  + ' ' * 6 + '\u2503\n' \
-		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 2 + char_hp + '\u2502' + ' ' * 2 + '\u2502' + char_sp + ' ' * 6 + '\u2503\n' \
+		'\u2503' + 'STR' + '\u2502' + stat_list[0] + '\u2502' + mod_list[0] + ' ' * 2 + char_hp + '\u2502' + char_ac + '\u2502' + char_sp + ' ' * 6 + '\u2503\n' \
 		'\u2503' + 'DEX' + '\u2502' + stat_list[1] + '\u2502' + mod_list[1] + ' ' * 16 + '\u2503\n' \
 		'\u2503' + 'CON' + '\u2502' + stat_list[2] + '\u2502' + mod_list[2] + ' ' * 2 + 'WEAPONS/ARMOR' + ' ' + '\u2503\n' \
-		'\u2503' + 'INT' + '\u2502' + stat_list[3] + '\u2502' + mod_list[3] + ' ' * 16 + '\u2503\n' \
+		'\u2503' + 'INT' + '\u2502' + stat_list[3] + '\u2502' + mod_list[3] + ' ' * 2 + char_weapon + '\u2503\n' \
 		'\u2503' + 'WIS' + '\u2502' + stat_list[4] + '\u2502' + mod_list[4] + ' ' * 16 + '\u2503\n' \
 		'\u2503' + 'CHA' + '\u2502' + stat_list[5] + '\u2502' + mod_list[5] + ' ' * 16 + '\u2503\n' \
 		'\u2503' + ' ' * 27 + '\u2503\n' \
@@ -264,6 +273,7 @@ def build_character():
 	while selection_status == False:	
 
 		char_name = input('Name your gladiator: ')
+		print('\n')
 		selection_status = validate_string_length(char_name, 25)
 
 	#establish and write to the name tag
@@ -273,6 +283,7 @@ def build_character():
 	#establish the race tag, call the list selector function, then write the selection
 	branch = etree.SubElement(character_branch, 'race')
 	race_tag = list_selection('race_data.xml', 'name')
+	print('\n')
 	etree.SubElement(branch, race_tag)
 
 	#-----STATS-----#
@@ -297,14 +308,20 @@ def build_character():
 	selection_status = True
 	while selection_status == True:
 		stat_list = roll_stats()
+		print('Player stats:')
 		print(stat_list)
 		selection_status = yesno_selection('Re-roll stats? (Y/N): ')
-	
+		print('\n')
+
 	#build the stats dictionary and allow the user to re-build them at the end
 	selection_status = True
 	while selection_status == True:
 		stat_dict = build_stats(stat_list)
+		print('\n')
+		display_stats(stat_dict)
+		print('\n')
 		selection_status = yesno_selection('Re-select stats? (Y/N): ')	
+		print('\n')
 
 	# #use this dictionary for spoofing stats for testing
 	# stat_dict = {
@@ -360,11 +377,18 @@ def build_character():
 	speed = pull_value('race_data.xml', race_tag, 'speed')
 	branch.text = speed
 
+	#estasblish the AC tag, recall the selected stats, then write to file
+	#note that if other races are added then this step will need to be refactored to be more abstract
+	branch = etree.SubElement(stats_branch, 'ac')
+	armor_class = 10 + modify_attr(stat_dict['DEX']) + modify_attr(stat_dict['CON'])
+	branch.text = str(armor_class)
+
 	#-----INVENTORY-----#
 	#establish the inventory tag, call the list selector function, then write the selection
 	inventory_branch = etree.SubElement(root, 'inventory')
 	tag_name = list_selection('weapon_data.xml', 'name')
 	etree.SubElement(inventory_branch, tag_name)
+	print('\n')
 
 	#-----SAVE DATABASE-----#
 	#once character building is complete the XML file is written
@@ -499,7 +523,8 @@ def pad_string(input_string, field_length, adjustment):
 #===========================================================================
 #game loop
 #===========================================================================
-#tbd
+build_character()
+display_character_build('character_data.xml')
 #===========================================================================
 #testing
 #===========================================================================
@@ -536,10 +561,10 @@ def pad_string(input_string, field_length, adjustment):
 # test = pad_string('XYZ', 3, True)
 # print(test, 'end')
 
-#this tests the functionalirt of the character sheet display function
-#running this should produce a fully-populated character sheet for the plater to review
-#the only input should be the character data file
-display_character_build('rosebud_data.xml')
+# #this tests the functionalirt of the character sheet display function
+# #running this should produce a fully-populated character sheet for the plater to review
+# #the only input should be the character data file
+# display_character_build('rosebud_data.xml')
 
 # # this tests the functionality of the character building function
 # # running this should write the player inputs to the character_xml data file
