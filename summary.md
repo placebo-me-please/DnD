@@ -22,4 +22,4 @@ Generally speaking, functions were created to be as abstract as possible. For ex
 
 The end-use of this code is TBD, but I learned enough from developing it that it surely has some value. For example, I learned how to use the ElemenTree API for parsing, reading, and writing XML files, which is a gateway into learning more about databases. Perhaps I'll be able to re-use some functions and methods from this code in a future project.
 
-This could be used to create a printable character sheet for tabletop DnD, or I could create a gladiator combat scenario that increases in difficulty as the player progresses.
+This could be used to create a printable character sheet for tabletop DnD, or I could create a gladiator combat scenario that increases in difficulty as the player progresses. I also hadn't learned about Class objects, so I could always refactor the script to be a bit more elegant than it currently is.
